@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Must be executed first, to ensure event listeners are registered first. -->
+<script src="first-input-delay.js"></script>
+<script>
+document.addEventListener('first-input', (e) => {console.log(e.detail)});
+</script>
+<style>
+</style>
+</head>
+<body>
+<p>Test</p>
+</body>
+</html>
