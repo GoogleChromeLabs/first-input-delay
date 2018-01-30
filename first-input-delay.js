@@ -18,11 +18,10 @@
     }
   }
 
-  // Pointer events can trigger main or compositor thread behavior. We attempt
-  // to differenciate these cases based on whether or not we see a
+  // Pointer events can trigger main or compositor thread behavior. We
+  // differenciate these cases based on whether or not we see a
   // pointercancel. pointercancels are fired when we scroll. If we scroll, we
-  // don't consider this a real input. This will count a scroll against a
-  // scroll extent as user input.
+  // don't consider this a real input.
   function processPointerDown(delay) {
     function removeListeners() {
       document.removeEventListener('pointerup', processPointerUp, {passive:true, capture:true});
