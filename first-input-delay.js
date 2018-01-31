@@ -1,7 +1,7 @@
 "use strict";
 
 (function() {
-  // TODO - only register touchstart / pointerdown if other listeners are present.
+  // TODO - only register touchstart / pointerdown if other listeners are present. Add click listener.
   const eventTypes = ['mousedown', 'keydown', 'touchstart', 'pointerdown'];
   let has_dispatched_delay_event = false;
 
