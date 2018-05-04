@@ -1,0 +1,13 @@
+{
+  "env": {
+    "browser": true,
+    "es6": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "google"
+  ],
+  "rules": {
+    "no-var": 0,
+  }
+}

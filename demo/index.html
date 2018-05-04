@@ -1,0 +1,9 @@
+<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+<script src="../dist/first-input-delay.min.js"></script>
+
+<script>
+perfMetrics.onFirstInputDelay(function(delay, evt) {
+  console.log('First Input Delay', delay);
+  console.log('Event details', evt);
+});
+</script>
