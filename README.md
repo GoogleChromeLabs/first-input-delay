@@ -14,7 +14,7 @@ npm install --save-dev first-input-delay
 
 To use this library to measure FID on your web site or application, you must do two things.
 
-**1) Add the minified code in [`dist/first-input-delay.js`](/dist/first-input-delay.js) to the `<head>` of your document.**
+**1) Add the minified code in [`dist/first-input-delay.js`](/dist/first-input-delay.min.js) to the `<head>` of your document.**
 
 The code in this file adds the necessary event listeners to detect the first user input, and since user input on a page can happen at any time, it's critical that this code runs as early as possible.
 
