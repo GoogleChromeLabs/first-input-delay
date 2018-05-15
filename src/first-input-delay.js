@@ -1,61 +1,156 @@
-"use strict";
+/*
+ Copyright 2018 Google Inc. All Rights Reserved.
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+*/
 
 (function() {
-  // TODO - only register touchstart / pointerdown if other listeners are present. Add click listener.
-  const eventTypes = ['mousedown', 'keydown', 'touchstart', 'pointerdown'];
-  let has_dispatched_delay_event = false;
+  var listenerOpts = {passive: true, capture: true};
+  var eventTypes = [
+    'click',
+    'mousedown',
+    'keydown',
+    'touchstart',
+    'pointerdown',
+  ];
 
-  function dispatchDelayEvent(delay) {
-    if (has_dispatched_delay_event)
-      return;
-    has_dispatched_delay_event = true;
+  var firstInputDelay;
+  var firstInputEvent;
+  var firstInputCallbacks = [];
 
-    const firstInputDelayEvent = new CustomEvent('first-input', {detail: {delay}});
-    document.dispatchEvent(firstInputDelayEvent);
+  /**
+   * Accepts a callback to be invoked once the first input delay and event
+   * are known.
+   * @param {!Function} callback
+   */
+  function onFirstInputDelay(callback) {
+    firstInputCallbacks.push(callback);
+    reportDelayIfReady();
+  }
 
-    for (let eventType of eventTypes) {
-      document.removeEventListener(eventType, onInput, {passive:true, capture:true});
+  /**
+   * Records the first input delay and event, so subsequent events can be
+   * ignored. All added event listeners are then removed.
+   * @param {number} delay
+   * @param {!Event} evt
+   */
+  function recordDelay(delay, evt) {
+    if (!firstInputDelay) {
+      firstInputDelay = delay;
+      firstInputEvent = evt;
+
+      eventTypes.forEach(function(eventType) {
+        removeEventListener(eventType, onInput, listenerOpts);
+      });
+
+      reportDelayIfReady();
     }
   }
 
-  // Pointer events can trigger main or compositor thread behavior. We
-  // differenciate these cases based on whether or not we see a
-  // pointercancel. pointercancels are fired when we scroll. If we scroll, we
-  // don't consider this a real input.
-  function processPointerDown(delay) {
+  /**
+   * Reports the first input delay and event (if set) by invoking the set of
+   * callback function (if set). If any of these are not set, nothing happens.
+   */
+  function reportDelayIfReady() {
+    if (firstInputDelay && firstInputEvent && firstInputCallbacks.length > 0) {
+      firstInputCallbacks.forEach(function(callback) {
+        callback(firstInputDelay, firstInputEvent);
+      });
+      firstInputCallbacks = [];
+    }
+  }
+
+  /**
+   * Handles pointer down events, which are a special case.
+   * Pointer events can trigger main or compositor thread behavior.
+   * We differenciate these cases based on whether or not we see a
+   * pointercancel event, which are fired when we scroll. If we're scrolling
+   * we don't need to report input delay since FID excludes scrolling and
+   * pinch/zooming.
+   * @param {number} delay
+   * @param {!Event} evt
+   */
+  function onPointerDown(delay, evt) {
+    /**
+     * Responds to pointerup events and records a delay. If a pointer up event
+     * is the next event after a pointerdown event, then it's not a sroll or
+     * a pinch/zoom.
+     */
+    function onPointerUp() {
+      recordDelay(delay, evt);
+      removeListeners();
+    }
+
+    /**
+     * Responds to pointercancel events and removes pointer listeners.
+     * If a pointercancel is the next event to fire after a pointerdown event,
+     * it means this is a scroll or pinch/zoom interaction.
+     */
+    function onPointerCancel() {
+      removeListeners();
+    }
+
+    /**
+     * Removes added pointer event listeners.
+     */
     function removeListeners() {
-      document.removeEventListener('pointerup', processPointerUp, {passive:true, capture:true});
-      document.removeEventListener('pointercancel', processPointerCancel, {passive:true, capture:true});
+      removeEventListener('pointerup', onPointerUp, listenerOpts);
+      removeEventListener('pointercancel', onPointerCancel, listenerOpts);
     }
 
-    function processPointerUp() {
-      dispatchDelayEvent(delay);
-      removeListeners();
-    }
-
-    function processPointerCancel() {
-      removeListeners();
-    }
-
-    document.addEventListener('pointerup', processPointerUp, {passive:true, capture:true});
-    document.addEventListener('pointercancel', processPointerCancel, {passive:true, capture:true});
+    addEventListener('pointerup', onPointerUp, listenerOpts);
+    addEventListener('pointercancel', onPointerCancel, listenerOpts);
   }
 
-  function onInput(event) {
-    // Only count cancelable events, which should trigger behavior important to the user.
-    if (event.cancelable == false)
-      return;
+  /**
+   * Handles all input events and records the time between when the event
+   * was received by the operating system and when it's JavaScript listeners
+   * were able to run.
+   * @param {!Event} evt
+   */
+  function onInput(evt) {
+    // Only count cancelable events, which should trigger behavior
+    // important to the user.
+    if (evt.cancelable) {
+      var now = performance.now();
+      var eventTimeStamp = evt.timeStamp;
 
-    const delay = performance.now() - event.timeStamp;
+      // In some browsers event.timeStamp returns a DOMTimeStamp instead of
+      // a DOMHighResTimeStamp, which means we need to compare it to
+      // Date.now() instead of performance.now().
+      if (eventTimeStamp > now) {
+        now = +new Date;
+      }
 
-    if (event.type == 'pointerdown') {
-      processPointerDown(delay);
-      return;
+      var delay = now - eventTimeStamp;
+
+      if (evt.type == 'pointerdown') {
+        onPointerDown(delay, evt);
+        return;
+      }
+
+      recordDelay(delay, evt);
     }
-
-    dispatchDelayEvent(delay);
   }
 
-  for (let eventType of eventTypes)
-    document.addEventListener(eventType, onInput, {passive:true, capture:true});
+  // TODO(tdresser): only register touchstart/pointerdown if other
+  // listeners are present.
+  eventTypes.forEach(function(eventType) {
+    addEventListener(eventType, onInput, listenerOpts);
+  });
+
+  // Don't override the perfMetrics namespace if it already exists.
+  window['perfMetrics'] = window['perfMetrics'] || {};
+
+  // Expose `perfMetrics.onFirstInputDelay` as a promise that can be awaited.
+  window['perfMetrics']['onFirstInputDelay'] = onFirstInputDelay;
 })();

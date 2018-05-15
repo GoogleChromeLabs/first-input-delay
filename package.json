@@ -1,0 +1,35 @@
+{
+  "name": "first-input-delay",
+  "version": "0.1.0",
+  "description": "A JavaScript library for measuring the First Input Delay metric. See https://goo.gl/1AKcj5.",
+  "main": "src/first-input-delay.js",
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^4.19.1",
+    "eslint-config-google": "^0.9.1"
+  },
+  "scripts": {
+    "test": "eslint src"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoogleChromeLabs/first-input-delay.git"
+  },
+  "contributors": [
+    "Timothy Dresser <tdresser@chromium.org>",
+    "Philip Walton <philip@philipwalton.com> (https://philipwalton.com/)"
+  ],
+  "keywords": [
+    "analytics",
+    "google",
+    "metrics",
+    "performance",
+    "RUM",
+    "speed"
+  ],
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/GoogleChromeLabs/first-input-delay/issues"
+  },
+  "homepage": "https://github.com/GoogleChromeLabs/first-input-delay#readme"
+}

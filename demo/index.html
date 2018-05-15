@@ -1,15 +1,9 @@
-<!DOCTYPE html>
-<html>
-<head>
-<!-- Must be executed first, to ensure event listeners are registered first. -->
-<script src="first-input-delay.js"></script>
+<script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+<script src="../dist/first-input-delay.min.js"></script>
+
 <script>
-document.addEventListener('first-input', (e) => {console.log(e.detail)});
+perfMetrics.onFirstInputDelay(function(delay, evt) {
+  console.log('First Input Delay', delay);
+  console.log('Event details', evt);
+});
 </script>
-<style>
-</style>
-</head>
-<body>
-<p>Test</p>
-</body>
-</html>
