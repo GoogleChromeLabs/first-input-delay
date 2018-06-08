@@ -23,6 +23,7 @@
     'pointerdown',
   ];
 
+  var firstInputOccurred = false;
   var firstInputDelay;
   var firstInputEvent;
   var firstInputCallbacks = [];
@@ -44,7 +45,8 @@
    * @param {!Event} evt
    */
   function recordDelay(delay, evt) {
-    if (!firstInputDelay) {
+    if (!firstInputOccurred) {
+      firstInputOccurred = true;
       firstInputDelay = delay;
       firstInputEvent = evt;
 
@@ -61,7 +63,7 @@
    * callback function (if set). If any of these are not set, nothing happens.
    */
   function reportDelayIfReady() {
-    if (firstInputDelay && firstInputEvent && firstInputCallbacks.length > 0) {
+    if (firstInputOccurred && firstInputCallbacks.length > 0) {
       firstInputCallbacks.forEach(function(callback) {
         callback(firstInputDelay, firstInputEvent);
       });
