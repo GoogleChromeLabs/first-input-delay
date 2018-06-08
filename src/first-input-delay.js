@@ -133,7 +133,7 @@
 
       // Some browsers report event timestamp values greater than what they
       // report for performance.now(). To avoid computing a negative
-      // first input delay, we clamp it at >0.
+      // first input delay, we clamp it at >=0.
       // https://github.com/GoogleChromeLabs/first-input-delay/issues/4
       var delay = Math.max(now - eventTimeStamp, 0);
 
