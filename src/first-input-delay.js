@@ -23,6 +23,7 @@
     'pointerdown',
   ];
 
+  var firstInputOccurred = false;
   var firstInputDelay;
   var firstInputEvent;
   var firstInputCallbacks = [];
@@ -44,7 +45,8 @@
    * @param {!Event} evt
    */
   function recordDelay(delay, evt) {
-    if (!firstInputDelay) {
+    if (!firstInputOccurred) {
+      firstInputOccurred = true;
       firstInputDelay = delay;
       firstInputEvent = evt;
 
@@ -61,7 +63,7 @@
    * callback function (if set). If any of these are not set, nothing happens.
    */
   function reportDelayIfReady() {
-    if (firstInputDelay && firstInputEvent && firstInputCallbacks.length > 0) {
+    if (firstInputOccurred && firstInputCallbacks.length > 0) {
       firstInputCallbacks.forEach(function(callback) {
         callback(firstInputDelay, firstInputEvent);
       });
@@ -121,17 +123,19 @@
     // Only count cancelable events, which should trigger behavior
     // important to the user.
     if (evt.cancelable) {
-      var now = performance.now();
       var eventTimeStamp = evt.timeStamp;
 
       // In some browsers event.timeStamp returns a DOMTimeStamp instead of
       // a DOMHighResTimeStamp, which means we need to compare it to
-      // Date.now() instead of performance.now().
-      if (eventTimeStamp > now) {
-        now = +new Date;
-      }
+      // Date.now() instead of performance.now(). To check for that we assume
+      // any timestamp greater than 1 trillion is a DOMTimeStamp.
+      var now = eventTimeStamp > 1e12 ? +new Date : performance.now();
 
-      var delay = now - eventTimeStamp;
+      // Some browsers report event timestamp values greater than what they
+      // report for performance.now(). To avoid computing a negative
+      // first input delay, we clamp it at >=0.
+      // https://github.com/GoogleChromeLabs/first-input-delay/issues/4
+      var delay = Math.max(now - eventTimeStamp, 0);
 
       if (evt.type == 'pointerdown') {
         onPointerDown(delay, evt);
