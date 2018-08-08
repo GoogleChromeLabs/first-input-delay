@@ -15,15 +15,6 @@
 
 (function() {
   var listenerOpts = {passive: true, capture: true};
-  var eventTypes = [
-    'click',
-    'mousedown',
-    'keydown',
-    'touchstart',
-    'pointerdown',
-  ];
-
-  var firstInputOccurred = false;
   var firstInputDelay;
   var firstInputEvent;
   var firstInputCallbacks = [];
@@ -45,15 +36,10 @@
    * @param {!Event} evt
    */
   function recordDelay(delay, evt) {
-    if (!firstInputOccurred) {
-      firstInputOccurred = true;
+    if (!firstInputEvent) {
       firstInputDelay = delay;
       firstInputEvent = evt;
-
-      eventTypes.forEach(function(eventType) {
-        removeEventListener(eventType, onInput, listenerOpts);
-      });
-
+      eachEventType(removeEventListener);
       reportDelayIfReady();
     }
   }
@@ -63,7 +49,7 @@
    * callback function (if set). If any of these are not set, nothing happens.
    */
   function reportDelayIfReady() {
-    if (firstInputOccurred && firstInputCallbacks.length > 0) {
+    if (firstInputEvent) {
       firstInputCallbacks.forEach(function(callback) {
         callback(firstInputDelay, firstInputEvent);
       });
@@ -146,15 +132,29 @@
     }
   }
 
+  /**
+   * Invokes the passed callback function for each event type with the
+   * `onInput` function and `listenerOpts`.
+   * @param {!Function} callback
+   */
+  function eachEventType(callback) {
+    var eventTypes = [
+      'click',
+      'mousedown',
+      'keydown',
+      'touchstart',
+      'pointerdown',
+    ];
+    eventTypes.forEach(function(eventType) {
+      callback(eventType, onInput, listenerOpts);
+    });
+  }
+
   // TODO(tdresser): only register touchstart/pointerdown if other
   // listeners are present.
-  eventTypes.forEach(function(eventType) {
-    addEventListener(eventType, onInput, listenerOpts);
-  });
+  eachEventType(addEventListener);
 
   // Don't override the perfMetrics namespace if it already exists.
-  window['perfMetrics'] = window['perfMetrics'] || {};
-
-  // Expose `perfMetrics.onFirstInputDelay` as a promise that can be awaited.
-  window['perfMetrics']['onFirstInputDelay'] = onFirstInputDelay;
+  self['perfMetrics'] = self['perfMetrics'] || {};
+  self['perfMetrics']['onFirstInputDelay'] = onFirstInputDelay;
 })();
