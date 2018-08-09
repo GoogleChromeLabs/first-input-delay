@@ -18,7 +18,7 @@ To use this library to measure FID on your web site or application, you must do 
 
 The code in this file adds the necessary event listeners to detect the first user input, and since user input on a page can happen at any time, it's critical that this code runs as early as possible.
 
-Since it's less than 400 bytes, we recommended you inline it directly into your document `<head>` to avoid a blocking request.
+Since it's less than 400 bytes (gzipped), we recommended you inline it directly into your document `<head>` to avoid a blocking request.
 
 **2) Register a callback to run when FID is detected.**
 

@@ -1,6 +1,6 @@
 {
   "name": "first-input-delay",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A JavaScript library for measuring the First Input Delay metric. See https://goo.gl/1AKcj5.",
   "main": "src/first-input-delay.js",
   "dependencies": {},
