@@ -14,10 +14,13 @@
 */
 
 (function() {
-  var listenerOpts = {passive: true, capture: true};
-  var firstInputDelay;
   var firstInputEvent;
-  var firstInputCallbacks = [];
+  var firstInputDelay;
+  var firstInputTimeStamp;
+
+  var callbacks = [];
+  var listenerOpts = {passive: true, capture: true};
+  var startTimeStamp = new Date;
 
   /**
    * Accepts a callback to be invoked once the first input delay and event
@@ -25,8 +28,8 @@
    * @param {!Function} callback
    */
   function onFirstInputDelay(callback) {
-    firstInputCallbacks.push(callback);
-    reportDelayIfReady();
+    callbacks.push(callback);
+    reportFirstInputDelayIfRecordedAndValid();
   }
 
   /**
@@ -35,25 +38,33 @@
    * @param {number} delay
    * @param {!Event} evt
    */
-  function recordDelay(delay, evt) {
+  function recordFirstInputDelay(delay, evt) {
     if (!firstInputEvent) {
-      firstInputDelay = delay;
       firstInputEvent = evt;
+      firstInputDelay = delay;
+      firstInputTimeStamp = new Date;
+
       eachEventType(removeEventListener);
-      reportDelayIfReady();
+      reportFirstInputDelayIfRecordedAndValid();
     }
   }
 
   /**
-   * Reports the first input delay and event (if set) by invoking the set of
-   * callback function (if set). If any of these are not set, nothing happens.
+   * Reports the first input delay and event (if they're recorded and valid)
+   * by running the array of callback functions.
    */
-  function reportDelayIfReady() {
-    if (firstInputEvent) {
-      firstInputCallbacks.forEach(function(callback) {
+  function reportFirstInputDelayIfRecordedAndValid() {
+    // In some cases the recorded delay is clearly wrong, e.g. it's negative
+    // or it's larger than the time between now and when the page was loaded.
+    // - https://github.com/GoogleChromeLabs/first-input-delay/issues/4
+    // - https://github.com/GoogleChromeLabs/first-input-delay/issues/6
+    // - https://github.com/GoogleChromeLabs/first-input-delay/issues/7
+    if (firstInputDelay >= 0 &&
+        firstInputDelay < firstInputTimeStamp - startTimeStamp) {
+      callbacks.forEach(function(callback) {
         callback(firstInputDelay, firstInputEvent);
       });
-      firstInputCallbacks = [];
+      callbacks = [];
     }
   }
 
@@ -74,8 +85,8 @@
      * a pinch/zoom.
      */
     function onPointerUp() {
-      recordDelay(delay, evt);
-      removeListeners();
+      recordFirstInputDelay(delay, evt);
+      removePointerEventListeners();
     }
 
     /**
@@ -84,13 +95,13 @@
      * it means this is a scroll or pinch/zoom interaction.
      */
     function onPointerCancel() {
-      removeListeners();
+      removePointerEventListeners();
     }
 
     /**
      * Removes added pointer event listeners.
      */
-    function removeListeners() {
+    function removePointerEventListeners() {
       removeEventListener('pointerup', onPointerUp, listenerOpts);
       removeEventListener('pointercancel', onPointerCancel, listenerOpts);
     }
@@ -109,26 +120,25 @@
     // Only count cancelable events, which should trigger behavior
     // important to the user.
     if (evt.cancelable) {
-      var eventTimeStamp = evt.timeStamp;
+      // In some browsers `event.timeStamp` returns a `DOMTimeStamp` value
+      // (epoch time) istead of the newer `DOMHighResTimeStamp`
+      // (document-origin time). To check for that we assume any timestamp
+      // greater than 1 trillion is a `DOMTimeStamp`, and compare it using
+      // the `Date` object rather than `performance.now()`.
+      // - https://github.com/GoogleChromeLabs/first-input-delay/issues/4
+      var isEpochTime = evt.timeStamp > 1e12;
+      var now = isEpochTime ? new Date : performance.now();
 
-      // In some browsers event.timeStamp returns a DOMTimeStamp instead of
-      // a DOMHighResTimeStamp, which means we need to compare it to
-      // Date.now() instead of performance.now(). To check for that we assume
-      // any timestamp greater than 1 trillion is a DOMTimeStamp.
-      var now = eventTimeStamp > 1e12 ? +new Date : performance.now();
-
-      // Some browsers report event timestamp values greater than what they
-      // report for performance.now(). To avoid computing a negative
-      // first input delay, we clamp it at >=0.
-      // https://github.com/GoogleChromeLabs/first-input-delay/issues/4
-      var delay = Math.max(now - eventTimeStamp, 0);
+      // Input delay is the delta between when the system received the event
+      // (e.g. evt.timeStamp) and when it could run the callback (e.g. `now`).
+      var delay = now - evt.timeStamp;
 
       if (evt.type == 'pointerdown') {
         onPointerDown(delay, evt);
         return;
       }
 
-      recordDelay(delay, evt);
+      recordFirstInputDelay(delay, evt);
     }
   }
 
