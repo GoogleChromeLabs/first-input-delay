@@ -13,7 +13,7 @@
  limitations under the License.
 */
 
-(function() {
+(function(addEventListener, removeEventListener) {
   var firstInputEvent;
   var firstInputDelay;
   var firstInputTimeStamp;
@@ -21,6 +21,9 @@
   var callbacks = [];
   var listenerOpts = {passive: true, capture: true};
   var startTimeStamp = new Date;
+
+  var pointerup = 'pointerup';
+  var pointercancel = 'pointercancel';
 
   /**
    * Accepts a callback to be invoked once the first input delay and event
@@ -102,12 +105,12 @@
      * Removes added pointer event listeners.
      */
     function removePointerEventListeners() {
-      removeEventListener('pointerup', onPointerUp, listenerOpts);
-      removeEventListener('pointercancel', onPointerCancel, listenerOpts);
+      removeEventListener(pointerup, onPointerUp, listenerOpts);
+      removeEventListener(pointercancel, onPointerCancel, listenerOpts);
     }
 
-    addEventListener('pointerup', onPointerUp, listenerOpts);
-    addEventListener('pointercancel', onPointerCancel, listenerOpts);
+    addEventListener(pointerup, onPointerUp, listenerOpts);
+    addEventListener(pointercancel, onPointerCancel, listenerOpts);
   }
 
   /**
@@ -135,10 +138,9 @@
 
       if (evt.type == 'pointerdown') {
         onPointerDown(delay, evt);
-        return;
+      } else {
+        recordFirstInputDelay(delay, evt);
       }
-
-      recordFirstInputDelay(delay, evt);
     }
   }
 
@@ -167,4 +169,4 @@
   // Don't override the perfMetrics namespace if it already exists.
   self['perfMetrics'] = self['perfMetrics'] || {};
   self['perfMetrics']['onFirstInputDelay'] = onFirstInputDelay;
-})();
+})(addEventListener, removeEventListener);
