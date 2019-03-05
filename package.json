@@ -7,10 +7,13 @@
   "devDependencies": {
     "eslint": "^4.19.1",
     "eslint-config-google": "^0.9.1",
+    "puppeteer": "^1.11.0",
     "terser": "^3.8.2"
   },
   "scripts": {
-    "test": "eslint src",
+    "test": "npm run lint && npm run puppeteer",
+    "puppeteer": "node tests/puppeteer.js",
+    "lint": "eslint src",
     "build": "terser -c -m -o dist/first-input-delay.min.js src/first-input-delay.js"
   },
   "repository": {

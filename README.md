@@ -1,4 +1,4 @@
-# First Input Delay
+# First Input Delay [![Build Status](https://travis-ci.org/GoogleChromeLabs/first-input-delay.svg?branch=master)](https://travis-ci.org/GoogleChromeLabs/first-input-delay)
 
 A JavaScript library for measuring [First Input Delay (FID)](https://developers.google.com/web/updates/2018/05/first-input-delay) in the browser. See [the article](https://developers.google.com/web/updates/2018/05/first-input-delay) for a detailed metric description and explanation.
 

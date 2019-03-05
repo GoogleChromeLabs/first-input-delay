@@ -1,13 +1,20 @@
 {
   "env": {
     "browser": true,
-    "es6": true
+    "es6": true,
+    "node": true
   },
   "extends": [
     "eslint:recommended",
     "google"
   ],
   "rules": {
-    "no-var": 0,
+    "no-var": 0
+  },
+  "parserOptions": {
+    "ecmaVersion": 8
+  },
+  "globals": {
+    "perfMetrics": true
   }
 }
