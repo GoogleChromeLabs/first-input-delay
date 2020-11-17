@@ -1,3 +1,6 @@
+## ⚠️ This polyfill has moved. It is now part of the [web-vitals](https://github.com/GoogleChrome/web-vitals#load-the-library) library. ⚠️
+**All issues or feature requests should be submitted there. This repo will continue to exist for reference, but it is now archived.**
+
 # First Input Delay
 
 A JavaScript library for measuring [First Input Delay (FID)](https://developers.google.com/web/updates/2018/05/first-input-delay) in the browser. See [the article](https://developers.google.com/web/updates/2018/05/first-input-delay) for a detailed metric description and explanation.
